@@ -103,7 +103,7 @@ class ReceptionBill(models.Model):
 
 class MedicineDetails(models.Model):
     medicine_id = models.AutoField(primary_key=True)
-    medicine_name = models.CharField(max_length=255)
+    medicine_name = models.CharField(max_length=255,default=None)
     company_name = models.CharField(max_length=255)
     quantity = models.IntegerField()
     price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
@@ -126,7 +126,7 @@ class MedicineBill(models.Model):
 
 class LabTestManagement(models.Model):
     test_id = models.AutoField(primary_key=True)
-    test_name = models.CharField(max_length=255, unique=True)
+    test_name = models.CharField(max_length=255, unique=True, default=None)
     is_active = models.BooleanField(default=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -175,70 +175,65 @@ class MedicineHistory(models.Model):
     observation_details = models.TextField()
     diagnosis_details = models.TextField()
     def __str__(self):
-        return self.id
+        return str(self.id)
 
-class TestPrescription(models.Model):
-    id = models.AutoField(primary_key=True)
-    doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
-    appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
-    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    choose_test = models.ForeignKey(LabTestManagement, on_delete=models.CASCADE)
-    def __str__(self):
-        return self.id
+# class TestPrescription(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+#     appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+#     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
+#     choose_test = models.ForeignKey(LabTestManagement, on_delete=models.CASCADE)
+#     def __str__(self):
+#         return self.id
 
-class TestPrescriptionTests(models.Model):
-    id = models.AutoField(primary_key=True)
-    test_prescription_id = models.ForeignKey(TestPrescription, on_delete=models.CASCADE)
-    test_id = models.ManyToManyField(LabTestManagement)
-    def __str__(self):
-        return self.id
+# class TestPrescriptionTests(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     test_prescription_id = models.ForeignKey(TestPrescription, on_delete=models.CASCADE)
+#     test_id = models.ManyToManyField(LabTestManagement)
+#     def __str__(self):
+#         return self.id
 
 class MedicinePrescription(models.Model):
     id = models.AutoField(primary_key=True)
     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
     doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
     appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
-    medicine_id = models.ManyToManyField(MedicineDetails,blank=True)
+    medicine_id = models.ManyToManyField(MedicineDetails, blank=True)
+    test_id = models.ManyToManyField(LabTestManagement, blank=True)
     dosage = models.CharField(max_length=255)
     time_of_consumption = models.CharField(max_length=255)
     duration = models.CharField(max_length=200)
+
     def __str__(self):
         return str(self.id)
 
     def serialize(self):
-        medicine_details_data = list(self.medicine_id.values('medicine_name', 'medicine_id', 'price_per_unit'))
+        medicine_details_data = list(self.medicine_id.values('medicine_id', 'medicine_name', 'company_name', 'quantity', 'price_per_unit'))
 
         # Add dosage to each medicine_details entry
         for med_detail in medicine_details_data:
             med_detail['dosage'] = self.dosage
 
+        lab_details_data = list(self.test_id.values('test_id', 'test_name', 'amount'))
+        doctor_id = None
+        if hasattr(self, 'doctor_id') and hasattr(self.doctor_id.staff, 'doctor_id'):
+            doctor_id = self.doctor_id.staff.doctor_id
         return {
             'id': self.id,
-            'patient_id': self.patient_id.id,
-            'doctor_id': self.doctor_id.doctor_id,  # Assuming you want the doctor's ID field here
-            'appointment_id': self.appointment_id.id,
+            'patient_id': self.patient_id.patient_id,
+            'doctor_id': doctor_id,
+            'appointment_id': self.appointment_id.appointment_id,
             'medicine_details': medicine_details_data,
+            'lab_test_details': lab_details_data,
             'dosage': self.dosage,
             'time_of_consumption': self.time_of_consumption,
             'duration': self.duration,
         }
-        # Extract relevant data and serialize to JSON-serializable format
-        # return {
-        #     'id': self.id,
-        #     'patient_id': self.patient_id.id,
-        #     'doctor_id': self.doctor_id.doctor_id,
-        #     'appointment_id': self.appointment_id.id,
-        #     'medicine_details': list(self.medicine_id.values('medicine_name','medicine_id','price_per_unit')),
-        #     # Extract details from MedicineDetails
-        #
-        #     'dosage': self.dosage,
-        #     'time_of_consumption': self.time_of_consumption,
-        #     'duration': self.duration,
-        # }
-
 class MedicinePrescriptionMedicines(models.Model):
     id = models.AutoField(primary_key=True)
     medicine_prescription_id = models.ForeignKey(MedicinePrescription, on_delete=models.CASCADE)
     medicine_id = models.ForeignKey(MedicineDetails, on_delete=models.CASCADE)
     def __str__(self):
         return self.id
+
+

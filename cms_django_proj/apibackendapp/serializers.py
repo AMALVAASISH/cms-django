@@ -18,6 +18,8 @@ class DepartmentSerializer(serializers.ModelSerializer):
 # ===============================================================
 # ================================================================
 class DoctorSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source='staff.name')
+    specialisation = serializers.CharField(source='specialization')
     class Meta:
         model = Doctor
         fields = '__all__'
@@ -37,6 +39,8 @@ class PatientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source='doctor_id.staff.name')
+    specialisation = serializers.CharField(source='doctor_id.specialization.name')
     class Meta:
         model = Appointment
         fields = '__all__'
