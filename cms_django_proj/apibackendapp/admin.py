@@ -3,7 +3,7 @@
 from django.contrib import admin
 from .models import Patient,Appointment,ReceptionBill,Gender,BloodGroup, Doctor,Department,Specialization, Staff
 from .models import MedicineDetails,MedicineBill,LabTestManagement,LabBill,LabReport,MedicineHistory
-from .models import MedicinePrescription,MedicinePrescriptionMedicines
+from .models import MedicinePrescription,MedicinePrescriptionMedicines,Quantity
 
 class MedicinePrescriptionAdmin(admin.ModelAdmin):
     filter_horizontal = ('medicine_id','test_id',)  # This allows multiple selections in the admin interface
@@ -32,3 +32,4 @@ admin.site.register(MedicineHistory)
 # admin.site.register(TestPrescriptionTests)
 # admin.site.register(MedicinePrescription)
 admin.site.register(MedicinePrescriptionMedicines)
+admin.site.register(Quantity)
