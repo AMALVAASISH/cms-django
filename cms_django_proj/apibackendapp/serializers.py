@@ -93,9 +93,13 @@ class LabreportSerializer(serializers.ModelSerializer):
 #
 # ==========================================================
 # ==========================================================
+from .models import MedicineHistory
 class MedprescripSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicinePrescription
         fields = '__all__'
 
-
+class MedicineHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MedicineHistory
+        fields = '__all__'

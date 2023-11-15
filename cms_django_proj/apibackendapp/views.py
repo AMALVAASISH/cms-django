@@ -280,7 +280,21 @@ def medicine_prescrip(request):
         # Return serialized data as JSON response
         return JsonResponse(serialized_data.data, safe=False, encoder=DjangoJSONEncoder)
 
+from .models import MedicineHistory
+from .serializers import MedicineHistorySerializer
+def medicine_history_view(request):
 
+    if request.method =='GET':
+        medicines = MedicineHistory.objects.all()
+        serialized_medicines = MedicineHistorySerializer(medicines, many=True).data
+        return JsonResponse(serialized_medicines,safe=False,status=200)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer_add_medicine = MedicineHistorySerializer(data=data)
+        if serializer_add_medicine.is_valid():
+            serializer_add_medicine.save()
+            return JsonResponse(serializer_add_medicine.data, status=201)
+        return JsonResponse(serializer_add_medicine.errors, status=400)
 
 
 

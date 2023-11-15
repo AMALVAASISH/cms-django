@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 
 class Quantity(models.Model):
     quantity = models.IntegerField()
+    def __str__(self):
+        return self.quantity
+
 class BloodGroup(models.Model):
     title = models.CharField(max_length=5)
     slug = models.SlugField()

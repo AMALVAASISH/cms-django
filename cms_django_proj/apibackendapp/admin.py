@@ -33,3 +33,4 @@ admin.site.register(MedicineHistory)
 # admin.site.register(MedicinePrescription)
 admin.site.register(MedicinePrescriptionMedicines)
 admin.site.register(Quantity)
+
