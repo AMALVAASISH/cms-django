@@ -189,7 +189,7 @@ class TestPrescription(models.Model):
 class TestPrescriptionTests(models.Model):
     id = models.AutoField(primary_key=True)
     test_prescription_id = models.ForeignKey(TestPrescription, on_delete=models.CASCADE)
-    test_id = models.ForeignKey(LabTestManagement, on_delete=models.CASCADE)
+    test_id = models.ManyToManyField(LabTestManagement)
     def __str__(self):
         return self.id
 
@@ -198,13 +198,43 @@ class MedicinePrescription(models.Model):
     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
     doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
     appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
-    medicine_id = models.ForeignKey(MedicineDetails, on_delete=models.CASCADE)
-    medicine_name = models.CharField(max_length=255)
+    medicine_id = models.ManyToManyField(MedicineDetails,blank=True)
     dosage = models.CharField(max_length=255)
     time_of_consumption = models.CharField(max_length=255)
     duration = models.CharField(max_length=200)
     def __str__(self):
-        return self.id
+        return str(self.id)
+
+    def serialize(self):
+        medicine_details_data = list(self.medicine_id.values('medicine_name', 'medicine_id', 'price_per_unit'))
+
+        # Add dosage to each medicine_details entry
+        for med_detail in medicine_details_data:
+            med_detail['dosage'] = self.dosage
+
+        return {
+            'id': self.id,
+            'patient_id': self.patient_id.id,
+            'doctor_id': self.doctor_id.doctor_id,  # Assuming you want the doctor's ID field here
+            'appointment_id': self.appointment_id.id,
+            'medicine_details': medicine_details_data,
+            'dosage': self.dosage,
+            'time_of_consumption': self.time_of_consumption,
+            'duration': self.duration,
+        }
+        # Extract relevant data and serialize to JSON-serializable format
+        # return {
+        #     'id': self.id,
+        #     'patient_id': self.patient_id.id,
+        #     'doctor_id': self.doctor_id.doctor_id,
+        #     'appointment_id': self.appointment_id.id,
+        #     'medicine_details': list(self.medicine_id.values('medicine_name','medicine_id','price_per_unit')),
+        #     # Extract details from MedicineDetails
+        #
+        #     'dosage': self.dosage,
+        #     'time_of_consumption': self.time_of_consumption,
+        #     'duration': self.duration,
+        # }
 
 class MedicinePrescriptionMedicines(models.Model):
     id = models.AutoField(primary_key=True)
