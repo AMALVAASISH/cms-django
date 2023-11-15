@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 # Create your models here.
 
-
+class Quantity(models.Model):
+    quantity = models.IntegerField()
 class BloodGroup(models.Model):
     title = models.CharField(max_length=5)
     slug = models.SlugField()

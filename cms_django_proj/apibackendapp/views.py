@@ -3,26 +3,26 @@ from django.shortcuts import render
 from django.http import JsonResponse
 # Create your views here.
 from django.views import View
-from .models import Staff, Doctor, Department, Specialization,Gender,BloodGroup,ReceptionBill,Appointment,Patient, MedicineBill,MedicineDetails
+from .models import Staff, Doctor, Department, Specialization,Gender,BloodGroup,ReceptionBill,Appointment,Patient, MedicineBill,MedicineDetails,Quantity
 from rest_framework.parsers import JSONParser
-from .serializers import GenderSerializer,BloodgroupSerializer, PatientSerializer,AppointmentSerializer,BillSerializer,DoctorSerializer,StaffSerializer,DepartmentSerializer,SpecialisationSerializer
+from .serializers import GenderSerializer,BloodgroupSerializer, PatientSerializer,AppointmentSerializer,BillSerializer,DoctorSerializer,StaffSerializer,DepartmentSerializer,SpecialisationSerializer,QuantitySerializer
 
 def staff_list(request):
     if request.method == 'GET':
         staff_list = Staff.objects.all()
-        serialized_staff_list = StaffSerializer(staff_list,many=True)
+        serialized_staff_list = StaffSerializer(staff_list,many=True).data
         return JsonResponse(serialized_staff_list,safe=False,status=200)
 
 def department_list(request):
     if request.method == 'GET':
         department_list = Department.objects.all()
-        serialized_department_list = DepartmentSerializer(staff_list,many=True)
+        serialized_department_list = DepartmentSerializer(staff_list,many=True).data
         return JsonResponse(serialized_department_list,safe=False,status=200)
 
 def specialisation_list(request):
     if request.method == 'GET':
         specialisation_list = Specialization.objects.all()
-        serialized_specialisation_list = StaffSerializer(staff_list,many=True)
+        serialized_specialisation_list = SpecialisationSerializer(staff_list,many=True).data
         return JsonResponse(serialized_specialisation_list,safe=False,status=200)
 
 def medicines(request):
@@ -39,6 +39,11 @@ def medicines(request):
             return JsonResponse(serializer_add_medicine.data, status=201)
         return JsonResponse(serializer_add_medicine.errors, status=400)
 
+def medicine_quantity(request):
+    if request.method =='GET':
+        medicines_quantity = Quantity.objects.all()
+        serialized_medicines_quantity = QuantitySerializer(medicines_quantity, many=True).data
+        return JsonResponse(serialized_medicines_quantity,safe=False,status=200)
 
 def medicine_detail(request, medicine_id):
 
@@ -107,13 +112,13 @@ def lab_detail(request, test_id):
 def gender_list(request):
     if request.method == 'GET':
         gender_list = Gender.objects.all()
-        serialized_gender_list = GenderSerializer(gender_list,many=True)
+        serialized_gender_list = GenderSerializer(gender_list,many=True).data
         return JsonResponse(serialized_gender_list,safe=False, status=200)
 
 def bloodgroup_list(request):
     if request.method == 'GET':
         bloodgroup_list = BloodGroup.objects.all()
-        serialized_bloodgroup_list = BloodgroupSerializer(bloodgroup_list,many=True)
+        serialized_bloodgroup_list = BloodgroupSerializer(bloodgroup_list,many=True).data
         return JsonResponse(serialized_bloodgroup_list, safe=False, status=200)
 
 def patient_list(request):
@@ -207,14 +212,14 @@ from .serializers import MedicinedetailsSerializer,MedicinebillSerializer
 def medicine_list(request):
     if request.method =='GET':
         medicine_list = MedicineDetails.objects.all()
-        serialized_medicine_list = MedicinedetailsSerializer(medicine_list, many=True)
+        serialized_medicine_list = MedicinedetailsSerializer(medicine_list, many=True).data
         return JsonResponse(serialized_medicine_list,safe=False,status=200)
 
 
 def medicine_bill(request):
     if request.method == 'GET':
         medicine_bill = MedicineBill.objects.all()
-        serialized_medicine_bill = MedicinebillSerializer(medicine_bill, many=True)
+        serialized_medicine_bill = MedicinebillSerializer(medicine_bill, many=True).data
         return JsonResponse(serialized_medicine_bill,safe=False,status=200)
 
 #
@@ -225,14 +230,14 @@ from .serializers import LabtestSerializer,LabbillSerializer,LabreportSerializer
 def lab_tests(request):
     if request.method == 'GET':
         lab_tests = LabTestManagement.objects.all()
-        serialized_lab_tests = LabtestSerializer(lab_tests,many=True)
+        serialized_lab_tests = LabtestSerializer(lab_tests,many=True).data
         return JsonResponse(serialized_lab_tests,safe=False,status=200)
 
 
 def lab_bill(request):
     if request.method == 'GET':
         lab_bill = LabBill.objects.all()
-        serialized_lab_bill = LabbillSerializer(lab_bill,many=True)
+        serialized_lab_bill = LabbillSerializer(lab_bill,many=True).data
         return JsonResponse(serialized_lab_bill,safe=False,status=200)
 
 
@@ -273,7 +278,7 @@ def medicine_prescrip(request):
         serialized_data = [prescription.serialize() for prescription in medicine_prescriptions]
 
         # Return serialized data as JSON response
-        return JsonResponse(serialized_data, safe=False, encoder=DjangoJSONEncoder)
+        return JsonResponse(serialized_data.data, safe=False, encoder=DjangoJSONEncoder)
 
 
 

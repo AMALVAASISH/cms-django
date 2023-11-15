@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Doctor,Department,Staff,Specialization,User,Appointment,Patient,ReceptionBill,Gender,BloodGroup, MedicineDetails, MedicineBill
-from .models import MedicinePrescription
+from .models import MedicinePrescription, Quantity
 class StaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = Staff
@@ -22,6 +22,11 @@ class DoctorSerializer(serializers.ModelSerializer):
     specialisation = serializers.CharField(source='specialization')
     class Meta:
         model = Doctor
+        fields = '__all__'
+
+class QuantitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Quantity
         fields = '__all__'
 
 class GenderSerializer(serializers.ModelSerializer):
