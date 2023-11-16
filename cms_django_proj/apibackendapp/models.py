@@ -33,6 +33,9 @@ class Patient(models.Model):
     def __str__(self):
         return self.patient_id
 
+    def get_gender_name(self):
+        return self.gender.title
+
 class Department(models.Model):
     name = models.CharField(max_length=100)
 
