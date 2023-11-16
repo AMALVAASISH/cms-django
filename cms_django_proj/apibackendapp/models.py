@@ -103,7 +103,7 @@ class ReceptionBill(models.Model):
     bill_amount = models.IntegerField()
     bill_date = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return self.bill_no
+        return str(self.bill_no)
 
 class MedicineDetails(models.Model):
     medicine_id = models.AutoField(primary_key=True)
@@ -124,7 +124,8 @@ class MedicineBill(models.Model):
     gst = models.DecimalField(max_digits=10, decimal_places=2)
     billing_date = models.DateField(auto_now_add=True)
     paying_status = models.BooleanField(default=False)
-    staff_name = models.ForeignKey(User, on_delete=models.CASCADE)
+    staff_name = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='Pharmacist',
+                                   limit_choices_to={'role': 'Pharmacist'})
     def __str__(self):
         return self.bill_no
 

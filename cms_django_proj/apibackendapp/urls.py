@@ -1,5 +1,7 @@
 from django.urls import path
-from .views import medicine_prescrip, patient_list, patient_details_view, doctor_list,appointment_list,recep_bill_list
+from .views import medicine_prescrip, patient_list, patient_details_view, doctor_list, appointment_list, \
+    recep_bill_list, staff_list, Staff_detail, department_list, department_detail, specialisation_list, \
+    specialisation_detail, medicine_list, lab_tests, medicines, medicine_detail, lab_tests_admin, lab_detail
 
 urlpatterns = [
     path('medpre/',medicine_prescrip),
@@ -8,6 +10,18 @@ urlpatterns = [
     path('api/doctors/',doctor_list),
     path('api/appointments/',appointment_list),
     path('api/receptionbills/', recep_bill_list),
+    path('API/staff/', staff_list),
+    path('API/staff/<int:id>/', Staff_detail),
+    path('API/dept/', department_list),
+    path('API/dept/<int:id>/', department_detail),
+    path('API/spez/', specialisation_list),
+    path('API/spez/<int:id>/', specialisation_detail),
+    path('API/med/', medicine_list),
+    path('API/lab/', lab_tests),
+    path('API/meds/', medicines),
+    path('API/meds/<int:medicine_id>/', medicine_detail),
+    path('API/labs/', lab_tests_admin),
+    path('API/add/<int:test_id>/', lab_detail)
 
     # Add more URLs for other views/APIs as needed
 ]

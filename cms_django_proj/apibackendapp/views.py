@@ -3,6 +3,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 # Create your views here.
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import Staff, Doctor, Department, Specialization,Gender,BloodGroup,ReceptionBill,Appointment,Patient, MedicineBill,MedicineDetails,Quantity
 from rest_framework.parsers import JSONParser
 from .serializers import GenderSerializer,BloodgroupSerializer, PatientSerializer,AppointmentSerializer,BillSerializer,DoctorSerializer,StaffSerializer,DepartmentSerializer,SpecialisationSerializer,QuantitySerializer
@@ -12,18 +14,108 @@ def staff_list(request):
         staff_list = Staff.objects.all()
         serialized_staff_list = StaffSerializer(staff_list,many=True).data
         return JsonResponse(serialized_staff_list,safe=False,status=200)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer_add_staff = StaffSerializer(data=data)
+        if serializer_add_staff.is_valid():
+            serializer_add_staff.save()
+            return JsonResponse(serializer_add_staff.data, status=201)
+        return JsonResponse(serializer_add_staff.errors, status=400)
+
+@csrf_exempt
+def Staff_detail(request, id):
+    try:
+        staff = Staff.objects.get(id=id)
+    except Staff.DoesNotExist:
+        return JsonResponse({'error': 'Staff not found'}, status=404)
+
+    if request.method == 'GET':
+        serialized_staff = StaffSerializer(staff).data
+        return JsonResponse(serialized_staff, status=200)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = StaffSerializer(staff, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        staff.delete()
+        return JsonResponse({'message': 'Satff deleted successfully'}, status=204)
 
 def department_list(request):
     if request.method == 'GET':
         department_list = Department.objects.all()
-        serialized_department_list = DepartmentSerializer(staff_list,many=True).data
+        serialized_department_list = DepartmentSerializer(department_list,many=True).data
         return JsonResponse(serialized_department_list,safe=False,status=200)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer_add_department = DepartmentSerializer(data=data)
+        if serializer_add_department.is_valid():
+            serializer_add_department.save()
+            return JsonResponse(serializer_add_department.data, status=201)
+        return JsonResponse(serializer_add_department.errors, status=400)
+
+@csrf_exempt
+def department_detail(request, id):
+    try:
+        department = Department.objects.get(id=id)
+    except Staff.DoesNotExist:
+        return JsonResponse({'error': 'Department not found'}, status=404)
+
+    if request.method == 'GET':
+        serialized_Department = StaffSerializer(department).data
+        return JsonResponse(serialized_Department, status=200)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = DepartmentSerializer(department, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        department.delete()
+        return JsonResponse({'message': 'Department deleted successfully'}, status=204)
 
 def specialisation_list(request):
     if request.method == 'GET':
         specialisation_list = Specialization.objects.all()
-        serialized_specialisation_list = SpecialisationSerializer(staff_list,many=True).data
+        serialized_specialisation_list = SpecialisationSerializer(specialisation_list,many=True).data
         return JsonResponse(serialized_specialisation_list,safe=False,status=200)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer_add_specialisation = SpecialisationSerializer(data=data)
+        if serializer_add_specialisation.is_valid():
+            serializer_add_specialisation.save()
+            return JsonResponse(serializer_add_specialisation.data, status=201)
+        return JsonResponse(serializer_add_specialisation.errors, status=400)
+
+@csrf_exempt
+def specialisation_detail(request, id):
+    try:
+        specialisation = Specialization.objects.get(id=id)
+    except Specialization.DoesNotExist:
+        return JsonResponse({'error': 'Specialization not found'}, status=404)
+
+    if request.method == 'GET':
+        serialized_Specialization = SpecialisationSerializer(specialisation).data
+        return JsonResponse(serialized_Specialization, status=200)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = SpecialisationSerializer(specialisation, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+        return JsonResponse(serializer.errors, status=400)
+
+    elif request.method == 'DELETE':
+        specialisation.delete()
+        return JsonResponse({'message': 'Specialization deleted successfully'}, status=204)
 
 def medicines(request):
 
@@ -105,6 +197,26 @@ def lab_detail(request, test_id):
         lab_test.delete()
         return JsonResponse({'message': 'Test deleted successfully'}, status=204)
 
+def report_list(request):
+    if request.method == "GET":
+        #fetch all the posts data save it in the query set
+        posts_list =LabReport.objects.all()
+        #serialize the  query set,many =true bcoz we are processing a list
+        serialized_post_list = LabreportSerializer(posts_list,many=True)
+        #return the serialized object as a json response
+        return JsonResponse(serialized_post_list.data,safe=False,status=200)
+
+def lab_report_details_view(request,passed_id):
+    try:
+        lab_report_details = LabReport.objects.get(report_id=passed_id)
+    except LabReport.DoesNotExist:
+        return JsonResponse({'error': 'LabReport not found'}, status=404)
+
+    if request.method == "GET":
+        # serialize the lab report details
+        serialized_lab_report_details = LabreportSerializer(lab_report_details)
+        # return the serialized object as a JSON response
+        return JsonResponse(serialized_lab_report_details.data, safe=False, status=200)
 
 #
 # ======================================================================
@@ -120,7 +232,7 @@ def bloodgroup_list(request):
         bloodgroup_list = BloodGroup.objects.all()
         serialized_bloodgroup_list = BloodgroupSerializer(bloodgroup_list,many=True).data
         return JsonResponse(serialized_bloodgroup_list, safe=False, status=200)
-
+@csrf_exempt
 def patient_list(request):
     if request.method == 'GET':
         patient_list = Patient.objects.all()
@@ -139,7 +251,7 @@ def patient_list(request):
             return JsonResponse(patient_add_serializer.data , status=201)
 
         return JsonResponse(patient_add_serializer.errors, status=400)
-
+@csrf_exempt
 def patient_details_view(request, passed_id):
     # Get the details of the post with id passed_id
     patient_details = Patient.objects.get(id=passed_id)
@@ -166,7 +278,7 @@ def doctor_list(request):
         doctor_list = Doctor.objects.all()
         serialized_doctor_list = DoctorSerializer(doctor_list, many=True).data
         return JsonResponse(serialized_doctor_list,safe=False,status=200)
-
+@csrf_exempt
 def appointment_list(request):
     if request.method == 'GET':
         appointment_list = Appointment.objects.all()
@@ -185,8 +297,28 @@ def appointment_list(request):
             return JsonResponse(appointment_add_serializer.data , status=201)
 
         return JsonResponse(appointment_add_serializer.errors, status=400)
+@csrf_exempt
+def patient_appointment_details_view(request, passed_id):
+    # Get the details of the post with id passed_id
+    patient_appointment_details = Appointment.objects.get(id=passed_id)
+    if request.method == 'GET':
+        serialized_patient_appointment_details = PatientSerializer(patient_appointment_details).data
+        return JsonResponse(serialized_patient_appointment_details, safe=False, status=200)
 
+    elif request.method == 'PUT':
+        # get the data from the default parameter
+        request_data = JSONParser().parse(request)
+        # using a serializer serialize the parsed json
+        patient_appointment_edit_serializer = PatientSerializer(patient_appointment_details,data=request_data)
+        # if the serailizer return a valid serialized data
+        if patient_appointment_edit_serializer.is_valid():
+            patient_appointment_edit_serializer.save()
+            # send back the response code and the copy of data added as json
+            return JsonResponse(patient_appointment_edit_serializer.data , status=200)
 
+        return JsonResponse(patient_appointment_edit_serializer.errors, status=400)
+
+@csrf_exempt
 def recep_bill_list(request):
     if request.method == 'GET':
         recep_bill_list = ReceptionBill.objects.all()
@@ -221,6 +353,18 @@ def medicine_bill(request):
         medicine_bill = MedicineBill.objects.all()
         serialized_medicine_bill = MedicinebillSerializer(medicine_bill, many=True).data
         return JsonResponse(serialized_medicine_bill,safe=False,status=200)
+    elif request.method == 'POST':
+        # get the data from the default parameter
+        request_data = JSONParser().parse(request)
+        # using a serializer serialize the parsed json
+        medicine_bill_add_serializer = MedicinebillSerializer(data=request_data)
+        # if the serailizer return a valid serialized data
+        if medicine_bill_add_serializer.is_valid():
+            medicine_bill_add_serializer.save()
+            # send back the response code and thew copy of data added as json
+            return JsonResponse(medicine_bill_add_serializer.data, status=201)
+
+        return JsonResponse(medicine_bill_add_serializer.errors, status=400)
 
 #
 # ==========================================================================================
@@ -278,7 +422,14 @@ def medicine_prescrip(request):
         serialized_data = [prescription.serialize() for prescription in medicine_prescriptions]
 
         # Return serialized data as JSON response
-        return JsonResponse(serialized_data.data, safe=False, encoder=DjangoJSONEncoder)
+        return JsonResponse(serialized_data, safe=False, encoder=DjangoJSONEncoder)
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer_prescrip_medicine = MedprescripSerializer(data=data)
+        if serializer_prescrip_medicine.is_valid():
+            serializer_prescrip_medicine.save()
+            return JsonResponse(serializer_prescrip_medicine.data, status=201)
+        return JsonResponse(serializer_prescrip_medicine.errors, status=400)
 
 from .models import MedicineHistory
 from .serializers import MedicineHistorySerializer
@@ -297,7 +448,45 @@ def medicine_history_view(request):
         return JsonResponse(serializer_add_medicine.errors, status=400)
 
 
+def medicine_prescription_details_view(request, passed_id):
+    # Get the details of the post with id passed_id
+    medicine_details = MedicinePrescription.objects.get(id=passed_id)
+    if request.method == 'GET':
+        serialized_patient_details = MedprescripSerializer(medicine_details).data
+        return JsonResponse(serialized_patient_details, safe=False, status=200)
 
+    elif request.method == 'PUT':
+        # get the data from the default parameter
+        request_data = JSONParser().parse(request)
+        # using a serializer serialize the parsed json
+        patient_edit_serializer = MedicinePrescription(medicine_details,data=request_data)
+        # if the serailizer return a valid serialized data
+        if patient_edit_serializer.is_valid():
+            patient_edit_serializer.save()
+            # send back the response code and the copy of data added as json
+            return JsonResponse(patient_edit_serializer.data , status=200)
+
+        return JsonResponse(patient_edit_serializer.errors, status=400)
+
+def medical_history_details_view(request, passed_id):
+    # Get the details of the post with id passed_id
+    medical_details = MedicineHistory.objects.get(id=passed_id)
+    if request.method == 'GET':
+        serialized_patient_details = MedicineHistorySerializer(medical_details).data
+        return JsonResponse(serialized_patient_details, safe=False, status=200)
+
+    elif request.method == 'PUT':
+        # get the data from the default parameter
+        request_data = JSONParser().parse(request)
+        # using a serializer serialize the parsed json
+        patient_edit_serializer = MedicineHistorySerializer(medical_details,data=request_data)
+        # if the serailizer return a valid serialized data
+        if patient_edit_serializer.is_valid():
+            patient_edit_serializer.save()
+            # send back the response code and the copy of data added as json
+            return JsonResponse(patient_edit_serializer.data , status=200)
+
+        return JsonResponse(patient_edit_serializer.errors, status=400)
 
 
 
