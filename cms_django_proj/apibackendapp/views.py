@@ -205,6 +205,16 @@ def report_list(request):
         serialized_post_list = LabreportSerializer(posts_list,many=True)
         #return the serialized object as a json response
         return JsonResponse(serialized_post_list.data,safe=False,status=200)
+    elif request.method == 'POST':
+        requested_data = JSONParser().parse(request)
+        # Using serializer to serialize the parsed JSON for creating a new LabReport
+        lab_report_create_serializer = LabreportSerializer(data=requested_data)
+        # If the serializer returned valid serialized data
+        if lab_report_create_serializer.is_valid():
+            lab_report_create_serializer.save()
+            # Send back the response code and the copy of data added
+            return JsonResponse(lab_report_create_serializer.data, status=201)  # 201 Created status code
+        return JsonResponse(lab_report_create_serializer.errors, status=400)
 
 def lab_report_details_view(request,passed_id):
     try:
@@ -278,6 +288,7 @@ def doctor_list(request):
         doctor_list = Doctor.objects.all()
         serialized_doctor_list = DoctorSerializer(doctor_list, many=True).data
         return JsonResponse(serialized_doctor_list,safe=False,status=200)
+
 @csrf_exempt
 def appointment_list(request):
     if request.method == 'GET':
@@ -365,6 +376,16 @@ def medicine_bill(request):
             return JsonResponse(medicine_bill_add_serializer.data, status=201)
 
         return JsonResponse(medicine_bill_add_serializer.errors, status=400)
+
+def doctor_prescription(request):
+    if request.method == 'GET':
+        doctor_prescription = MedicinePrescription.objects.all()
+        # serialized_medicine_prescrip = MedprescripSerializer(medicine_prescrip,many=True)
+        # return JsonResponse(serialized_medicine_prescrip,safe=False,status=200)
+        serialized_data = [prescription.serialize() for prescription in doctor_prescription]
+
+        # Return serialized data as JSON response
+        return JsonResponse(serialized_data.data, safe=False, encoder=DjangoJSONEncoder)
 
 #
 # ==========================================================================================

@@ -39,13 +39,18 @@ class BloodgroupSerializer(serializers.ModelSerializer):
         model = BloodGroup
         fields = '__all__'
 class PatientSerializer(serializers.ModelSerializer):
+    patient_id = serializers.ReadOnlyField()
+
     class Meta:
         model = Patient
+        # exclude = ('patient_id',)
         fields = '__all__'
 
 class AppointmentSerializer(serializers.ModelSerializer):
     doctor_name = serializers.CharField(source='doctor_id.staff.name', read_only=True)
     specialisation = serializers.CharField(source='doctor_id.specialization.name',read_only=True)
+    appointment_id = serializers.ReadOnlyField()
+    token_no = serializers.ReadOnlyField()
     class Meta:
         model = Appointment
         fields = '__all__'

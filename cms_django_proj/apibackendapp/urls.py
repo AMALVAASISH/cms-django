@@ -6,7 +6,7 @@ from .views import medicine_prescrip, patient_list, patient_details_view, doctor
 urlpatterns = [
     path('medpre/',medicine_prescrip),
     path('api/patients/',patient_list),
-    path('api/patients/<int:passed_id>/', patient_details_view),
+    path('api/patients/<int:passed_id>', patient_details_view),
     path('api/doctors/',doctor_list),
     path('api/appointments/',appointment_list),
     path('api/receptionbills/', recep_bill_list),

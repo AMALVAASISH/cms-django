@@ -21,14 +21,22 @@ class Gender(models.Model):
         return self.title
 
 class Patient(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    ]
+    BLOOD_CHOICES = [
+        ('A+','A+'),('A-','A-'),('B+','B+'),('B-','B-'),('O+','O+'),('O-','O-'),('AB+','AB+')
+    ]
     patient_id = models.CharField(max_length=10)
     first_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
     dob = models.DateField()
     mobile_no = models.CharField(max_length=10)
     address = models.CharField(max_length=255)
-    blood_group = models.ForeignKey(BloodGroup, on_delete=models.CASCADE)
-    gender = models.ForeignKey(Gender, on_delete=models.CASCADE)
+    blood_group = models.CharField(max_length=3,choices=BLOOD_CHOICES)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     is_active = models.BooleanField(default=False)
     def __str__(self):
         return self.patient_id
@@ -96,6 +104,9 @@ class Appointment(models.Model):
     specialization_id = models.ForeignKey(Specialization, on_delete=models.CASCADE)
     appointment_date = models.DateField(auto_now_add=True)
     token_no = models.IntegerField()
+
+    class Meta:
+        db_table = 'appointment'
     def __str__(self):
         return self.appointment_id
 
