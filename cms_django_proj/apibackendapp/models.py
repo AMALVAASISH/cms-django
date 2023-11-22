@@ -110,38 +110,113 @@ class Appointment(models.Model):
     def __str__(self):
         return self.appointment_id
 
-class ReceptionBill(models.Model):
+class Receptionbill(models.Model):
+
     bill_no = models.IntegerField()
     appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
     bill_amount = models.IntegerField()
     bill_date = models.DateTimeField(auto_now_add=True)
+    token_no = models.IntegerField(default=None)
+    status = models.CharField(max_length=4, default='paid')
+    doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE,default='1')
+
+    class Meta:
+        db_table = 'your_table_name'
     def __str__(self):
         return str(self.bill_no)
 
-class MedicineDetails(models.Model):
-    medicine_id = models.AutoField(primary_key=True)
-    medicine_name = models.CharField(max_length=255,default=None)
-    company_name = models.CharField(max_length=255)
-    quantity = models.IntegerField()
-    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
 
-    def __str__(self):
+class Medicine(models.Model):
+    medicine_name = models.CharField(max_length=255)
+    description = models.TextField()
+    stock_quantity = models.IntegerField()
+    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+
+
+    def _str_(self):
         return self.medicine_name
 
+# class MedicineDetails(models.Model):
+#     medicine_id = models.AutoField(primary_key=True)
+#     medicine_name = models.CharField(max_length=255,default=None)
+#     company_name = models.CharField(max_length=255)
+#     quantity = models.IntegerField()
+#     price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+#
+#     def __str__(self):
+#         return self.medicine_name
+#
+class MedicineHistory(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+    dateofvisit = models.DateTimeField(auto_now_add=True)
+    observation_details = models.TextField()
+    diagnosis_details = models.TextField()
+    choose_test = models.ManyToManyField(Test, blank= True)
 
+
+# class MedicineBill(models.Model):
+#     bill_no = models.IntegerField(primary_key=True)
+#     medicine_prescription = models.ForeignKey('MedicinePrescription', on_delete=models.CASCADE)
+#     quantity = models.IntegerField()
+#     total_price = models.DecimalField(max_digits=10, decimal_places=2)
+#     gst = models.DecimalField(max_digits=10, decimal_places=2)
+#     billing_date = models.DateField(auto_now_add=True)
+#     paying_status = models.BooleanField(default=False)
+#     staff_name = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='Pharmacist',
+#                                    limit_choices_to={'role': 'Pharmacist'})
+#     def __str__(self):
+#         return self.bill_no
 class MedicineBill(models.Model):
-    bill_no = models.IntegerField(primary_key=True)
-    medicine_prescription = models.ForeignKey('MedicinePrescription', on_delete=models.CASCADE)
-    quantity = models.IntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    gst = models.DecimalField(max_digits=10, decimal_places=2)
-    billing_date = models.DateField(auto_now_add=True)
-    paying_status = models.BooleanField(default=False)
-    staff_name = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='Pharmacist',
-                                   limit_choices_to={'role': 'Pharmacist'})
-    def __str__(self):
-        return self.bill_no
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    medicine_prescription_id = models.ForeignKey(MedicineHistory, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField(auto_now_add=True)
+    medicine_bill_id = models.CharField(max_length=10, unique=True, editable=False)
+
+    def save(self, *args, **kwargs):
+        if not self.medicine_bill_id:
+            last_bill = MedicineBill.objects.order_by('-id').first()
+            new_bill_no = f"MED{str(last_bill.id + 1).zfill(4)}" if last_bill else "MED0001"
+            self.medicine_bill_id = new_bill_no
+        super(MedicineBill, self).save(*args, **kwargs)
+
+    def _str_(self):
+        return self.medicine_bill_id
+
+
+class Test(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+
+    def _str_(self):
+        return self.name
+
+
+class PrescriptionDetail(models.Model):
+    medicine_prescription = models.ForeignKey(MedicineHistory, on_delete=models.CASCADE, related_name='prescription_details')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    dosage = models.CharField(max_length=255)
+    time_of_consumption = models.CharField(max_length=255)
+    days = models.CharField(max_length=255,blank=True)
+
+class MedicineQuantity(models.Model):
+    prescribed_medicine = models.ForeignKey(PrescriptionDetail, on_delete=models.CASCADE,related_name='medicine_quantities')
+    quantity = models.IntegerField(default=1)
+@receiver(post_save, sender=MedicineQuantity)
+def update_stock_quantity(sender, instance, **kwargs):
+    # Update stock quantity when a new MedicineQuantity instance is created
+    medicine = instance.prescribed_medicine.medicine
+    new_stock_quantity = medicine.stock_quantity - instance.quantity
+    if new_stock_quantity >= 0:
+        medicine.stock_quantity = new_stock_quantity
+        medicine.save()
+
 
 class LabTestManagement(models.Model):
     test_id = models.AutoField(primary_key=True)
@@ -153,38 +228,81 @@ class LabTestManagement(models.Model):
         return self.test_name
 
 
+# class LabBill(models.Model):
+#     bill_number = models.CharField(max_length=20, unique=True)
+#     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
+#     doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+#     issue_date = models.DateField(auto_now_add=True)
+#     gst = models.DecimalField(max_digits=10, decimal_places=2)
+#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     is_paid = models.BooleanField(default=False)
+#
+#     def __str__(self):
+#         return f"Bill - {self.bill_number}"
+#
 class LabBill(models.Model):
-    bill_number = models.CharField(max_length=20, unique=True)
-    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
-    issue_date = models.DateField(auto_now_add=True)
-    gst = models.DecimalField(max_digits=10, decimal_places=2)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    is_paid = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Bill - {self.bill_number}"
-
-
-class LabReport(models.Model):
-    STATUS_CHOICES = [
-        ('Pending', 'Pending'),
-        ('Completed', 'Completed'),
-        ('In Progress', 'In Progress'),
-    ]
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', primary_key=True)
     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
     doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
     staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    blood_group = models.CharField(max_length=5)
-    low_range = models.FloatField()
-    high_range = models.FloatField()
-    actual_value = models.FloatField()
-    issue_date = models.DateTimeField(auto_now_add=True)
+    tested_tests = models.ForeignKey(MedicineHistory, on_delete=models.CASCADE)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    test_bill_id = models.CharField(max_length=10, unique=True, editable=False)
 
-    def __str__(self):
-        return f"Lab Report - {self.status}"
+    def save(self, *args, **kwargs):
+        if not self.test_bill_id:
+            last_bill = LabBill.objects.order_by('-id').first()
+            new_bill_no = f"TES{str(last_bill.id + 1).zfill(4)}" if last_bill else "TES0001"
+            self.test_bill_id = new_bill_no
+        super(LabBill, self).save(*args, **kwargs)
 
+
+    def _str_(self):
+        return self.test_bill_id
+
+# class LabReport(models.Model):
+#     STATUS_CHOICES = [
+#         ('Pending', 'Pending'),
+#         ('Completed', 'Completed'),
+#         ('In Progress', 'In Progress'),
+#     ]
+#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', primary_key=True)
+#     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
+#     doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+#     staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE)
+#     blood_group = models.CharField(max_length=5)
+#     low_range = models.FloatField()
+#     high_range = models.FloatField()
+#     actual_value = models.FloatField()
+#     issue_date = models.DateTimeField(auto_now_add=True)
+#
+#     def __str__(self):
+#         return f"Lab Report - {self.status}"
+
+
+class LabReport(models.Model):
+    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    staff_id = models.ForeignKey(Staff,on_delete=models.CASCADE)
+    doctor_id = models.ForeignKey(Doctor,on_delete=models.CASCADE)
+    tests = models.ManyToManyField(Test)
+    report = models.TextField()
+    lab_report_id = models.CharField(max_length=10, unique=True, editable=False)
+    test_bill_id = models.CharField(max_length=10, unique=True, editable=False)
+
+    def save(self, *args, **kwargs):
+        if not self.test_bill_id:
+            last_bill = LabReport.objects.order_by('-id').first()
+            new_bill_no = f"TES{str(last_bill.id + 1).zfill(4)}" if last_bill else "TES0001"
+            self.test_bill_id = new_bill_no
+
+        if not self.lab_report_id:
+            last_report = LabReport.objects.order_by('-id').first()
+            new_report_id = f"LR{str(last_report.id + 1).zfill(4)}" if last_report else "LR0001"
+            self.lab_report_id = new_report_id
+
+        super(LabReport, self).save(*args, **kwargs)
+
+    def _str_(self):
+        return self.lab_report_id
 
 class MedicineHistory(models.Model):
     id = models.AutoField(primary_key=True)
@@ -211,48 +329,48 @@ class MedicineHistory(models.Model):
 #     test_id = models.ManyToManyField(LabTestManagement)
 #     def __str__(self):
 #         return self.id
-
-class MedicinePrescription(models.Model):
-    id = models.AutoField(primary_key=True)
-    patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
-    appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
-    medicine_id = models.ManyToManyField(MedicineDetails, blank=True)
-    test_id = models.ManyToManyField(LabTestManagement, blank=True)
-    dosage = models.CharField(max_length=255)
-    time_of_consumption = models.CharField(max_length=255)
-    duration = models.CharField(max_length=200)
-
-    def __str__(self):
-        return str(self.id)
-
-    def serialize(self):
-        medicine_details_data = list(self.medicine_id.values('medicine_id', 'medicine_name', 'company_name', 'quantity', 'price_per_unit'))
-
-        # Add dosage to each medicine_details entry
-        for med_detail in medicine_details_data:
-            med_detail['dosage'] = self.dosage
-
-        lab_details_data = list(self.test_id.values('test_id', 'test_name', 'amount'))
-        doctor_id = None
-        if hasattr(self, 'doctor_id') and hasattr(self.doctor_id.staff, 'doctor_id'):
-            doctor_id = self.doctor_id.staff.doctor_id
-        return {
-            'id': self.id,
-            'patient_id': self.patient_id.patient_id,
-            'doctor_id': doctor_id,
-            'appointment_id': self.appointment_id.appointment_id,
-            'medicine_details': medicine_details_data,
-            'lab_test_details': lab_details_data,
-            'dosage': self.dosage,
-            'time_of_consumption': self.time_of_consumption,
-            'duration': self.duration,
-        }
-class MedicinePrescriptionMedicines(models.Model):
-    id = models.AutoField(primary_key=True)
-    medicine_prescription_id = models.ForeignKey(MedicinePrescription, on_delete=models.CASCADE)
-    medicine_id = models.ForeignKey(MedicineDetails, on_delete=models.CASCADE)
-    def __str__(self):
-        return self.id
+#
+# class MedicinePrescription(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     patient_id = models.ForeignKey(Patient, on_delete=models.CASCADE)
+#     doctor_id = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+#     appointment_id = models.ForeignKey(Appointment, on_delete=models.CASCADE)
+#     medicine_id = models.ManyToManyField(MedicineDetails, blank=True)
+#     test_id = models.ManyToManyField(LabTestManagement, blank=True)
+#     dosage = models.CharField(max_length=255)
+#     time_of_consumption = models.CharField(max_length=255)
+#     duration = models.CharField(max_length=200)
+#
+#     def __str__(self):
+#         return str(self.id)
+#
+#     def serialize(self):
+#         medicine_details_data = list(self.medicine_id.values('medicine_id', 'medicine_name', 'company_name', 'quantity', 'price_per_unit'))
+#
+#         # Add dosage to each medicine_details entry
+#         for med_detail in medicine_details_data:
+#             med_detail['dosage'] = self.dosage
+#
+#         lab_details_data = list(self.test_id.values('test_id', 'test_name', 'amount'))
+#         doctor_id = None
+#         if hasattr(self, 'doctor_id') and hasattr(self.doctor_id.staff, 'doctor_id'):
+#             doctor_id = self.doctor_id.staff.doctor_id
+#         return {
+#             'id': self.id,
+#             'patient_id': self.patient_id.patient_id,
+#             'doctor_id': doctor_id,
+#             'appointment_id': self.appointment_id.appointment_id,
+#             'medicine_details': medicine_details_data,
+#             'lab_test_details': lab_details_data,
+#             'dosage': self.dosage,
+#             'time_of_consumption': self.time_of_consumption,
+#             'duration': self.duration,
+#         }
+# class MedicinePrescriptionMedicines(models.Model):
+#     id = models.AutoField(primary_key=True)
+#     medicine_prescription_id = models.ForeignKey(MedicinePrescription, on_delete=models.CASCADE)
+#     medicine_id = models.ForeignKey(MedicineDetails, on_delete=models.CASCADE)
+#     def __str__(self):
+#         return self.id
 
 
